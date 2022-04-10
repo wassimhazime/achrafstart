@@ -1,0 +1,68 @@
+version: '3.7'
+volumes:
+    DataBase_achraf: {}
+
+
+
+
+
+networks:
+    networks_achraf:
+        driver: bridge
+
+services:
+
+    php8_achraf:
+        container_name: php8_achraf
+        build:
+            context: .
+            dockerfile: docker/php8
+        ports:
+            - "6001:80"
+        restart: always
+        command:
+            - "apache2-foreground"
+        volumes:
+            - ./docker/vhosts/vhostsApache.conf:/etc/apache2/sites-enabled/000-default.conf
+            #- ./docker/php.ini:/usr/local/etc/php/php.ini
+            #- ./docker/docker-xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+            - ./:/var/www/html
+        networks:
+            - networks_achraf
+
+
+
+
+    DataBase_dockerachraf:
+        image: mariadb:10.3
+        container_name: DataBase_dockerachraf
+        restart: always
+        environment:
+            MARIADB_USER: root
+            MARIADB_PASSWORD: root
+            MARIADB_ROOT_PASSWORD: root
+            MYSQL_DATABASE: db
+        volumes:
+            - DataBase_achraf:/var/lib/mysql
+            #- ./mariadb/my.cnf:/etc/mysql/conf.d/my.cnf
+        depends_on:
+            - php8_achraf
+        networks:
+            - networks_achraf
+
+    phpmyadminachraf:
+        image: phpmyadmin
+        container_name: phpmyadminachraf
+        restart: always
+        links:
+            - DataBase_dockerachraf:DataBase_dockerachraf
+        ports:
+            - 6003:80
+        environment:
+            - PMA_ARBITRARY=1
+        depends_on:
+            - DataBase_dockerachraf
+        networks:
+            - networks_achraf
+
+
